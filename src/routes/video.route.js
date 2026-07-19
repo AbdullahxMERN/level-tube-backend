@@ -8,6 +8,10 @@ import { getVideoById } from "../controllers/video.controller.js";
 import { updateVideo } from "../controllers/video.controller.js";
 import { deleteVideo } from "../controllers/video.controller.js";
 import { togglePublishStatus } from "../controllers/video.controller.js";
+import {
+  verifyJwt,
+  verifyJwtOptional,
+} from "../middlewares/auth.middlewares.js";
 const router = Router();
 // Apply verifyJWT middleware to all routes in this file
 
@@ -30,7 +34,7 @@ router.route("/upload").post(
 
 router
   .route("/:videoId")
-  .get(getVideoById)
+  .get(verifyJwtOptional, getVideoById)
   .delete(verifyJwt, deleteVideo)
   .patch(verifyJwt, upload.single("thumbnail"), updateVideo);
 
