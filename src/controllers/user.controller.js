@@ -70,6 +70,7 @@ const userRegister = asynchandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: true,
+    sameSite: "none",
   };
   return res
     .status(200)
@@ -114,8 +115,9 @@ const userLoggIn = asynchandler(async (req, res) => {
 
   const { refreshToken, accessToken } = await AccessAndRefreshTokens(user);
   const options = {
-    httpOnly: false,
-    secure: false,
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
   };
   return res
     .status(200)
@@ -146,10 +148,10 @@ const userLggedOut = asynchandler(async (req, res) => {
       returnDocument: "after",
     },
   );
-
   const options = {
-    httpOnly: false,
-    secure: false,
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
   };
 
   return res
@@ -173,12 +175,12 @@ const refreshAccessToken = asynchandler(async (req, res) => {
     throw new apiError(401, "your token is expired");
   }
   let newRefreshToken;
-  const { accessToken, newRefreshToken: refreshToken } =
+  const { accessToken, refreshToken: newRefreshToken } =
     await AccessAndRefreshTokens(user);
-
   const options = {
-    httpOnly: false,
-    secure: false,
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
   };
   return res
     .status(200)
@@ -213,10 +215,10 @@ const changePassword = asynchandler(async (req, res) => {
   user.password = newPassword;
 
   const { accessToken, refreshToken } = await AccessAndRefreshTokens(user);
-
   const options = {
     httpOnly: true,
     secure: true,
+    sameSite: "none",
   };
   return res
     .status(200)

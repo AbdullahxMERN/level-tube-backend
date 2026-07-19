@@ -3,11 +3,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 const app = express();
-
 app.use(
   cors({
-    origin: "http://localhost:3000",
-    credentials: true, // only needed if you're sending cookies/auth headers
+    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    credentials: true,
   }),
 );
 app.use(express.json());
