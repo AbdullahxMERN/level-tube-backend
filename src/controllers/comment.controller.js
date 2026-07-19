@@ -5,18 +5,16 @@ import { apiRes } from "../utils/apiRes.js";
 import { asynchandler } from "../utils/asynchandler.js";
 
 const getVideoComments = asynchandler(async (req, res) => {
-  //TODO: get all comments for a video
   const { videoId } = req.params;
   const allComments = await Comment.find({
     video: videoId,
-  });
+  }).populate("owner", "userName fullName avatar");
   return res
     .status(200)
     .json(new apiRes(200, allComments, "all comments on video"));
 });
 
 const addComment = asynchandler(async (req, res) => {
-  // TODO: add a comment to a video
   const { videoId } = req.params;
   const { content } = req?.body;
   const comment = await Comment.create({
@@ -24,9 +22,15 @@ const addComment = asynchandler(async (req, res) => {
     content: content,
     owner: req.user._id,
   });
+
+  const populatedComment = await comment.populate(
+    "owner",
+    "userName fullName avatar",
+  );
+
   return res
     .status(200)
-    .json(new apiRes(200, comment, "comment added to a video"));
+    .json(new apiRes(200, populatedComment, "comment added to a video"));
 });
 
 const updateComment = asynchandler(async (req, res) => {
