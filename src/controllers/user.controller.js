@@ -174,7 +174,6 @@ const refreshAccessToken = asynchandler(async (req, res) => {
   if (userToken !== user.refreshToken) {
     throw new apiError(401, "your token is expired");
   }
-  let newRefreshToken;
   const { accessToken, refreshToken: newRefreshToken } =
     await AccessAndRefreshTokens(user);
   const options = {
