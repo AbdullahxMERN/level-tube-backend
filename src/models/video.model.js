@@ -25,10 +25,17 @@ const videoSchema = new Schema(
       type: String,
       required: true,
     },
+
     views: {
       type: Number,
       default: 0,
     },
+    viewedBy: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+      },
+    ],
     owner: {
       type: mongoose.Schema.ObjectId,
       ref: "User",

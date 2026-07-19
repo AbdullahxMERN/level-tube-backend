@@ -92,21 +92,33 @@ const publishAVideo = asynchandler(async (req, res) => {
 }); //Project break due to exams
 const getVideoById = asynchandler(async (req, res) => {
   const { videoId } = req.params;
-  //TODO: get video by id
 
-  const videoById = await Video.findByIdAndUpdate(
-    videoId,
-    {
-      $inc: { views: 1 },
-    },
-    {
-      new: true,
-    },
-  ).populate("owner", "userName fullName avatar email");
-
-  if (!videoById) {
+  const video = await Video.findById(videoId);
+  if (!video) {
     throw new apiError(404, "video not existing");
   }
+
+  // Only increment views once per logged-in user; guests still count
+  // but won't be tracked individually
+  if (req.user?._id) {
+    const alreadyViewed = video.viewedBy?.some(
+      (id) => id.toString() === req.user._id.toString(),
+    );
+    if (!alreadyViewed) {
+      video.views += 1;
+      video.viewedBy.push(req.user._id);
+      await video.save();
+    }
+  } else {
+    video.views += 1;
+    await video.save();
+  }
+
+  const videoById = await Video.findById(videoId).populate(
+    "owner",
+    "userName fullName avatar email",
+  );
+
   return res
     .status(200)
     .json(new apiRes(200, videoById, "video successfully fetched by id "));
