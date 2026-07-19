@@ -1,4 +1,4 @@
-import { apiError } from "../utils/ApiError.js";
+import { apiError } from "../utils/apiError.js";
 import { apiRes } from "../utils/apiRes.js";
 import { asynchandler } from "../utils/asynchandler.js";
 
