@@ -26,7 +26,7 @@ const toggleSubscription = asynchandler(async (req, res) => {
   }
   return res
     .status(200)
-    .json(new apiRes(200, "subscribe is toogled succesfully"));
+    .json(new apiRes(200, {}, "subscribe is toggled successfully"));
 });
 
 // controller to return subscriber list of a channel
