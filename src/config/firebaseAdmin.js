@@ -1,5 +1,6 @@
 import pkg from "firebase-admin";
-const admin = pkg;
+
+const admin = pkg.default ?? pkg;
 
 if (!admin.apps.length) {
   admin.initializeApp({
