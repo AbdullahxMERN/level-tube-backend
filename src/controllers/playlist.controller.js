@@ -30,13 +30,15 @@ const getUserPlaylists = asynchandler(async (req, res) => {
   //TODO: get user playlists
   const userPlaylists = await Playlist.find({
     owner: userId,
-  }).populate({
-    path: "video",
-    populate: {
-      path: "owner",
-      select: "userName fullName avatar email",
-    },
-  }).populate("owner", "userName fullName avatar email");
+  })
+    .populate({
+      path: "video",
+      populate: {
+        path: "owner",
+        select: "userName fullName avatar email",
+      },
+    })
+    .populate("owner", "userName fullName avatar email");
 
   const formatted = userPlaylists.map((p) => {
     const obj = p.toObject();
@@ -46,9 +48,7 @@ const getUserPlaylists = asynchandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(
-      new apiRes(200, formatted, "user playlists fetched successfully"),
-    );
+    .json(new apiRes(200, formatted, "user playlists fetched successfully"));
 });
 
 const getPlaylistById = asynchandler(async (req, res) => {
@@ -81,7 +81,7 @@ const addVideoToPlaylist = asynchandler(async (req, res) => {
   const addvid = await Playlist.findByIdAndUpdate(
     playlistId,
     {
-      $push: {
+      $addToSet: {
         video: videoId,
       },
     },
