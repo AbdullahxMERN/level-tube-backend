@@ -17,7 +17,11 @@ import {
   verifyJwt,
   verifyJwtOptional,
 } from "../middlewares/auth.middlewares.js";
+
+import { googleLogin } from "../controllers/user.controller.js"; // adjust if already imported differently
 const router = Router();
+
+router.route("/google-login").post(googleLogin);
 router.route("/register").post(
   upload.fields([
     {

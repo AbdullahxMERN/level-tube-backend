@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
+import admin from "../config/firebaseAdmin.js";
 import { apiError } from "../utils/apiError.js";
 import { apiRes } from "../utils/apiRes.js";
 import { asynchandler } from "../utils/asynchandler.js";
@@ -132,6 +133,80 @@ const userLoggIn = asynchandler(async (req, res) => {
           refreshToken,
         },
         "user LoggedIn successfully",
+      ),
+    );
+});
+const googleLogin = asynchandler(async (req, res) => {
+  const { idToken } = req.body;
+
+  if (!idToken) {
+    throw new apiError(400, "Google ID token is required");
+  }
+
+  let decoded;
+  try {
+    decoded = await admin.auth().verifyIdToken(idToken);
+  } catch (error) {
+    throw new apiError(401, "Invalid or expired Google token");
+  }
+
+  const { email, name, picture } = decoded;
+
+  if (!email) {
+    throw new apiError(400, "Google account has no email");
+  }
+
+  let user = await User.findOne({ email });
+
+  if (!user) {
+    const baseUserName = email
+      .split("@")[0]
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+
+    let userName = baseUserName;
+    let suffix = 1;
+    while (await User.findOne({ userName })) {
+      userName = `${baseUserName}${suffix}`;
+      suffix++;
+    }
+
+    user = await User.create({
+      userName,
+      fullName: name || baseUserName,
+      email,
+      avatar:
+        picture ||
+        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100",
+      authProvider: "google",
+    });
+  }
+
+  const { refreshToken, accessToken } = await AccessAndRefreshTokens(user);
+
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken",
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new apiRes(
+        200,
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        },
+        "Google login successful",
       ),
     );
 });
@@ -435,4 +510,5 @@ export {
   coverImageChnage,
   channelDetails,
   userWatchHistory,
+  googleLogin,
 };

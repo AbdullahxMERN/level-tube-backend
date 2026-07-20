@@ -45,7 +45,16 @@ const userSchema = new Schema(
 
     password: {
       type: String,
-      required: [true, "password is required"],
+      required: function () {
+        // Google-created accounts don't have a password
+        return this.authProvider !== "google";
+      },
+    },
+
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
     },
 
     refreshToken: {
@@ -60,6 +69,7 @@ const userSchema = new Schema(
 
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
+  if (!this.password) return; // skip hashing for Google users with no password
   this.password = await bcrypt.hash(this.password, 10);
 });
 
