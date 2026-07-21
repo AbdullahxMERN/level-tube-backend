@@ -89,6 +89,52 @@ const userRegister = asynchandler(async (req, res) => {
       ),
     );
 });
+const userLoggIn = asynchandler(async (req, res) => {
+  const { userName, email, password } = req.body;
+
+  if (!(userName || email)) {
+    throw new apiError(400, "email or userName are require");
+  }
+
+  if (!password) {
+    throw new apiError(400, "passwrod is require");
+  }
+
+  const user = await User.findOne({
+    $or: [{ userName }, { email }],
+  });
+  if (!user) {
+    throw new apiError(404, "user not existing");
+  }
+
+  const passVild = await user.isPasswordCorrect(password);
+
+  if (!passVild) {
+    throw new apiError(401, "password is worng");
+  }
+
+  const { refreshToken, accessToken } = await AccessAndRefreshTokens(user);
+  const options = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  };
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new apiRes(
+        200,
+        {
+          user: user,
+          accessToken,
+          refreshToken,
+        },
+        "user LoggedIn successfully",
+      ),
+    );
+});
 const googleLogin = asynchandler(async (req, res) => {
   const { idToken } = req.body;
 
