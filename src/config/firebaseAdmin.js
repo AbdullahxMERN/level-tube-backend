@@ -1,34 +1,15 @@
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const admin = require("firebase-admin");
 
-const formatPrivateKey = (key) => {
-  if (!key) return undefined;
-
-  // Replace literal '\n' text with actual newline characters
-  let formattedKey = key.replace(/\\n/g, "\n");
-
-  // Strip outer quotes if they were imported as literal characters
-  if (formattedKey.startsWith('"') && formattedKey.endsWith('"')) {
-    formattedKey = formattedKey.slice(1, -1);
-  }
-  if (formattedKey.startsWith("'") && formattedKey.endsWith("'")) {
-    formattedKey = formattedKey.slice(1, -1);
-  }
-
-  return formattedKey;
-};
-
-if (getApps().length === 0) {
-  initializeApp({
-    credential: cert({
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY),
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
     }),
   });
 }
 
-const auth = getAuth();
-
-export { auth };
-export default { auth };
+export default admin;
