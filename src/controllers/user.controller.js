@@ -89,53 +89,6 @@ const userRegister = asynchandler(async (req, res) => {
       ),
     );
 });
-
-const userLoggIn = asynchandler(async (req, res) => {
-  const { userName, email, password } = req.body;
-
-  if (!(userName || email)) {
-    throw new apiError(400, "email or userName are require");
-  }
-
-  if (!password) {
-    throw new apiError(400, "passwrod is require");
-  }
-
-  const user = await User.findOne({
-    $or: [{ userName }, { email }],
-  });
-  if (!user) {
-    throw new apiError(404, "user not existing");
-  }
-
-  const passVild = await user.isPasswordCorrect(password);
-
-  if (!passVild) {
-    throw new apiError(401, "password is worng");
-  }
-
-  const { refreshToken, accessToken } = await AccessAndRefreshTokens(user);
-  const options = {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-  };
-  return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-      new apiRes(
-        200,
-        {
-          user: user,
-          accessToken,
-          refreshToken,
-        },
-        "user LoggedIn successfully",
-      ),
-    );
-});
 const googleLogin = asynchandler(async (req, res) => {
   const { idToken } = req.body;
 
@@ -147,10 +100,12 @@ const googleLogin = asynchandler(async (req, res) => {
   try {
     decoded = await admin.auth().verifyIdToken(idToken);
   } catch (error) {
+    // TEMP DEBUG LOG — remove once working, check Railway logs for the real cause
+    console.error("Firebase verifyIdToken error:", error);
     throw new apiError(401, "Invalid or expired Google token");
   }
 
-  const { email, name, picture } = decoded;
+  const { email, name, picture, email_verified } = decoded;
 
   if (!email) {
     throw new apiError(400, "Google account has no email");
@@ -171,13 +126,19 @@ const googleLogin = asynchandler(async (req, res) => {
       suffix++;
     }
 
+    // Google's default picture URL is small (=s96-c suffix); request a larger version
+    let avatarUrl =
+      picture ||
+      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100";
+    if (avatarUrl.includes("=s96-c")) {
+      avatarUrl = avatarUrl.replace("=s96-c", "=s400-c");
+    }
+
     user = await User.create({
       userName,
       fullName: name || baseUserName,
       email,
-      avatar:
-        picture ||
-        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100",
+      avatar: avatarUrl,
       authProvider: "google",
     });
   }
@@ -210,7 +171,6 @@ const googleLogin = asynchandler(async (req, res) => {
       ),
     );
 });
-
 const userLggedOut = asynchandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
